@@ -11,67 +11,81 @@
     <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-
-<!-- New Game Screen -->
-<div id="newGameScreen" class="new-game-screen active">
-    <div class="new-game-container">
-        <h1>Two Piece</h1>
-        <p class="subtitle">Lennä paikasta toiseen ja kerää parhaat sarjat itsellesi!</p>
-        
-        <div class="form-container">
-            <div class="form-group">
-                <label for="playerName">Syötä nimi:</label>
-                <input 
-                    type="text" 
-                    id="playerName" 
-                    placeholder="esim. Pelaaja1"
-                    maxlength="50"
-                >
-                <small class="text-hint">Tämä tulee olemaan sinun pelaajanimesi</small>
-            </div>
-            
-            <button id="startGameBtn" class="btn-start">Aloita peli</button>
-            
-            <div id="errorMessage" class="error-message hidden"></div>
-            <div id="loadingSpinner" class="spinner hidden"></div>
-        </div>
+<div class="container">
+    <div class="map-section">
+        <h2 class="section-title">WORLD MAP</h2>
+        <div id="map"></div>
     </div>
+
+    <aside class="sidebar">
+        <section class="panel status-section">
+            <h2 class="section-title">PLAYER STATUS</h2>
+            <div class="stat-row"><span class="stat-label">NAME:</span><span class="stat-value" id="player-name-val">-</span></div>
+            <div class="stat-row"><span class="stat-label">FUEL:</span><span class="stat-value" id="fuel-val">5000 L</span></div>
+            <div class="stat-row"><span class="stat-label">POINTS:</span><span class="stat-value" id="points-val">0</span></div>
+            <div class="stat-row"><span class="stat-label">MONEY:</span><span class="stat-value" id="money-val">100 €</span></div>
+        </section>
+
+        <section class="panel leaderboard-section">
+            <h2 class="section-title">LEADERBOARD</h2>
+            <div class="leaderboard-box">
+                <table class="leaderboard-table">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Pilot</th>
+                        <th>Pts</th>
+                    </tr>
+                    </thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </div>
+            <div class="leaderboard-empty" id="leaderboard-empty">No scores yet</div>
+            <button class="leaderboard-new-run" id="new-run-btn" type="button" hidden>NEW RUN</button>
+        </section>
+
+        <section class="panel inventory-section">
+            <h2 class="section-title">INVENTORY</h2>
+            <div class="anime-grid" id="anime-inventory">
+                <div class="item-slot loading-slot">...</div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+            </div>
+        </section>
+
+        <section class="panel collection-section">
+            <h2 class="section-title">COLLECTIONS</h2>
+            <div class="collection-box">
+                <table class="collection-table">
+                    <thead>
+                    <tr>
+                        <th>Anime</th>
+                        <th>Average</th>
+                        <th>Cost</th>
+                        <th>Points</th>
+                    </tr>
+                    </thead>
+                    <tbody id="anime-collection"></tbody>
+                </table>
+                <div class="collection-empty" id="collection-empty">Click anime to collect</div>
+            </div>
+        </section>
+    </aside>
 </div>
 
-<!-- Main Game Screen -->
-<div id="gameScreen" class="game-screen">
-    <div class="container">
-        <div class="map-section">
-            <div id="map"></div>
+<!-- Player Name Modal -->
+<div id="playerNameModal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title">Player Name</h2>
+        <p class="modal-message">Enter your pilot name.</p>
+        <input class="modal-input" id="player-name-input" type="text" maxlength="24" autocomplete="off">
+
+        <div class="modal-actions">
+            <button class="btn btn-confirm" id="player-name-confirm">Start</button>
         </div>
-
-        <aside class="sidebar">
-            <section class="panel status-section">
-                <h2 class="section-title">PLAYER STATUS</h2>
-                <div class="stat-row">PLAYER: <span id="statusPlayerName">-</span></div>
-                <div class="stat-row">LOCATION: <span id="statusLocation">-</span></div>
-                <div class="stat-row">RIOT POINTS: <span id="statusPoints">0</span></div>
-                <div class="stat-row">BREAD: <span id="statusMoney">0 €</span></div>
-                <h2 class="section-title">TOIMINNOT</h2>
-                <button class="menu-btn">COLLECTIONS</button>
-                <button class="menu-btn">TRAVEL</button>
-                <button class="menu-btn danger" id="quitGameBtn">QUIT GAME</button>
-            </section>
-
-            <section class="panel inventory-section">
-                <h2 class="section-title">INVENTORY</h2>
-                <div class="anime-grid">
-                    <div class="item-slot"><img
-                            src="https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21-ELSYx3yMPcKM.jpg"
-                            alt="OP"></div>
-                    <div class="item-slot"></div>
-                    <div class="item-slot"></div>
-                    <div class="item-slot"></div>
-                    <div class="item-slot"></div>
-                    <div class="item-slot"></div>
-                </div>
-            </section>
-        </aside>
     </div>
 </div>
 
@@ -80,35 +94,35 @@
     <div class="modal-content">
         <h2 class="modal-title"></h2>
         <p class="modal-message">Do you want to travel here?</p>
+        <p class="modal-message fuel-info" id="travel-fuel-info"></p>
 
         <div class="modal-actions">
             <button class="btn btn-confirm">Confirm</button>
             <button class="btn btn-cancel">Cancel</button>
         </div>
     </div>
+</div>
 
-    <!-- Series Selection Modal (appears after travel) -->
-    <div id="seriesModal" class="modal">
-        <div class="modal-content series-modal">
-            <h2 class="modal-title">Choose a Series to Add</h2>
-            <p class="modal-message">Select one of these amazing series to add to your collection!</p>
-            
-            <div id="seriesOptions" class="series-options">
-                <!-- Series cards will be inserted here dynamically -->
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn btn-cancel" id="skipSeriesBtn">Skip</button>
-            </div>
+<!-- Anime Detail Modal -->
+<div id="animeDetailModal" class="modal">
+    <div class="modal-content anime-detail-content">
+        <h2 class="modal-title" id="anime-detail-title">Anime Title</h2>
+        <div class="anime-detail-body">
+            <img id="anime-detail-image" src="" alt="">
+            <div id="anime-detail-description" class="anime-description"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-confirm" id="anime-detail-close">Close</button>
         </div>
     </div>
+</div>
 
-    <!-- Leaflet JS -->
+<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script src="js/game.js"></script>
-<script src="js/map.js"></script>
 <script src="js/main.js"></script>
+<script src="js/map.js"></script>
 
 </body>
 </html>
