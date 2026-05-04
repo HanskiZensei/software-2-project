@@ -41,7 +41,7 @@ async function loadRandomAnimeInventory() {
     renderLeaderboard();
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/anilist/random?count=${INVENTORY_SLOT_COUNT}`);
+        const response = await fetch(`${API_BASE_URL}/api/anilist/random-series?count=${INVENTORY_SLOT_COUNT}`);
         const data = await response.json();
 
         if (!response.ok || !data.success) {
