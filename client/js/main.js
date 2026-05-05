@@ -46,6 +46,7 @@ async function loadExistingGame() {
             setCurrentAirport(airport);
         }
 
+        renderGameStatus(); // Ensure UI is updated with server money
         console.log('✓ Existing game loaded successfully');
         return true;
     } catch (error) {
@@ -111,7 +112,7 @@ function renderAnimeInventory() {
     }
 }
 
-function collectAnime(index) {
+async function collectAnime(index) {
     const anime = inventoryAnime[index];
 
     if (!anime || gameState.gameOver) {
@@ -122,6 +123,7 @@ function collectAnime(index) {
 
     if (gameState.money < price) {
         gameState.money = 0;
+        updateGameMoney(0).catch(err => console.error('Failed to sync zero money:', err));
         endGame('Money ran out');
         return;
     }
@@ -131,6 +133,10 @@ function collectAnime(index) {
     inventoryAnime.splice(index, 1);
     saveStoredGameState();
     saveStoredCollection();
+    
+    // Sync with server
+    updateGameMoney(gameState.money).catch(err => console.error('Failed to sync money with server:', err));
+
     renderGameStatus();
     renderAnimeInventory();
     renderCollection();
@@ -462,7 +468,13 @@ function setupPlayerNameModal(force = false) {
             const location = currentAirport ? currentAirport.icao : "EFHK";
             const gameData = await createNewGame(name, location);
             console.log('✓ Game created and ID saved');
-            
+        
+            // Ensure gameState.money is in sync with the newly created game (100)
+            if (gameData.money !== undefined) {
+                gameState.money = gameData.money;
+                saveStoredGameState();
+            }
+        
             // Fetch full airport data for the starting location
             try {
                 const gameInfo = await getGameInfo(gameData.game_id);
@@ -514,6 +526,7 @@ function saveStoredCollection() {
 
 function loadStoredGameState() {
     try {
+        const stored = JSON.parse(localStorage.getItem(GAME_STATE_STORAGE_KEY)) || {};
         return {
             fuel: INITIAL_FUEL,
             money: INITIAL_MONEY,
@@ -521,7 +534,7 @@ function loadStoredGameState() {
             gameOver: false,
             gameOverReason: null,
             leaderboardSaved: false,
-            ...(JSON.parse(localStorage.getItem(GAME_STATE_STORAGE_KEY)) || {})
+            ...stored
         };
     } catch (error) {
         console.error('Error loading game state:', error);

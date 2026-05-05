@@ -185,6 +185,46 @@ def update_location(game_id):
         return jsonify({'error': str(e)}), 500
 
 
+@bp.route('/<int:game_id>/money', methods=['PUT'])
+def update_money(game_id):
+    """
+    Update the game's money.
+    Expects JSON with the new money amount.
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or 'money' not in data:
+            return jsonify({'error': 'Missing money amount'}), 400
+        
+        money = data['money']
+        
+        session = Session()
+        try:
+            game = session.query(Game).filter_by(id=game_id).first()
+            
+            if not game:
+                return jsonify({'error': 'Game not found'}), 404
+            
+            game.money = money
+            session.commit()
+            
+            # Print for confirmation if needed during debug
+            print(f"✓ Updated game {game_id} money to {money}")
+            
+            return jsonify({
+                'success': True,
+                'game_id': game.id,
+                'new_money': game.money
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @bp.route('/<int:game_id>/travel', methods=['POST'])
 def travel(game_id):
     """
