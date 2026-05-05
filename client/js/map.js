@@ -50,9 +50,10 @@ function addAirportMarker(airport) {
     const marker = L.marker([latitude, longitude]).addTo(map);
 
     // Create custom icon with ICAO badge
+    const isCurrentAirport = currentAirport && currentAirport.icao === icao;
     const customIcon = L.divIcon({
         className: 'airport-marker',
-        html: `<div class="airport-badge" data-icao="${icao}" data-name="${name}">${icao}</div>`,
+        html: `<div class="airport-badge ${isCurrentAirport ? 'current-location' : ''}" data-icao="${icao}" data-name="${name}">${icao}</div>`,
         iconSize: [60, 30],
         iconAnchor: [30, 15]
     });
@@ -145,11 +146,34 @@ function handleTravelConfirm(destinationAirport) {
 
     currentAirport = destinationAirport;
     console.log(`Travel confirmed to ${destinationAirport.icao} (${destinationAirport.name})`);
+    
+    // Update marker styles
+    updateMarkerStyles();
     closeTravelModal();
+
+    if (typeof renderGameStatus === 'function') {
+        renderGameStatus();
+    }
 
     if (typeof loadRandomAnimeInventory === 'function') {
         loadRandomAnimeInventory();
     }
+}
+
+/**
+ * Update marker styles to highlight current location
+ */
+function updateMarkerStyles() {
+    Object.keys(airportMarkers).forEach(icao => {
+        const badge = document.querySelector(`[data-icao="${icao}"]`);
+        if (badge) {
+            if (currentAirport && currentAirport.icao === icao) {
+                badge.classList.add('current-location');
+            } else {
+                badge.classList.remove('current-location');
+            }
+        }
+    });
 }
 
 function calculateDistanceKm(fromAirport, toAirport) {

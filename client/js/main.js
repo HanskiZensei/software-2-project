@@ -257,7 +257,7 @@ function spendFuelForDistance(distanceKm) {
 function renderGameStatus() {
     const playerName = document.getElementById('player-name-val');
     const fuel = document.getElementById('fuel-val');
-    const money = document.getElementById('money-val');
+    const location = document.getElementById('location-val');
 
     if (playerName) {
         playerName.textContent = gameState.playerName || '-';
@@ -267,8 +267,10 @@ function renderGameStatus() {
         fuel.textContent = `${Math.max(0, Math.ceil(gameState.fuel))} L`;
     }
 
-    if (money) {
-        money.textContent = `${Math.max(0, gameState.money)} €`;
+    if (location && currentAirport) {
+        location.textContent = `${currentAirport.icao} (${currentAirport.name})`;
+    } else {
+        location.textContent = '-';
     }
 }
 

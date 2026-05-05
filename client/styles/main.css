@@ -432,7 +432,6 @@ body, html {
     min-height: 0;
     z-index: 1;
     border-radius: 8px;
-    filter: saturate(.85) brightness(.72);
     overflow: hidden;
 }
 
@@ -461,6 +460,16 @@ body, html {
 .airport-badge:hover {
     background-color: #1976D2;
     transform: scale(1.1);
+}
+
+.airport-badge.current-location {
+    background-color: #4CAF50;
+    border-color: #388E3C;
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.5);
+}
+
+.airport-badge.current-location:hover {
+    background-color: #388E3C;
 }
 
 /* Remove old conflicting styles */
