@@ -325,7 +325,6 @@ function renderGameStatus() {
 function endGame(reason) {
     gameState.gameOver = true;
     gameState.gameOverReason = reason;
-    saveFinishedRunToLeaderboard();
     saveStoredGameState();
     renderGameStatus();
     renderAnimeInventory();
@@ -338,19 +337,37 @@ function saveFinishedRunToLeaderboard() {
         return;
     }
 
-    const entry = {
-        playerName: gameState.playerName || 'Unknown',
-        score: calculateCollectionPoints(),
-        collectedCount: collectedAnime.length,
-        endedAt: new Date().toISOString()
-    };
-
-    leaderboard.push(entry);
-    leaderboard.sort((a, b) => b.score - a.score);
-    leaderboard = leaderboard.slice(0, LEADERBOARD_LIMIT);
     gameState.leaderboardSaved = true;
-    saveStoredLeaderboard();
+    const finalScore = calculateCollectionPoints();
     saveStoredGameState();
+    
+    // Save the final score to the database
+    const gameId = getGameId();
+    if (gameId) {
+        fetch(`${API_BASE_URL}/api/game/${gameId}/finish`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                points: finalScore,
+                money: gameState.money
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('✓ Game score saved:', finalScore);
+                // Reload leaderboard to show updated scores
+                loadLeaderboard().then(() => {
+                    renderLeaderboard();
+                });
+            } else {
+                console.error('✗ Error saving game score:', data.error);
+            }
+        })
+        .catch(error => console.error('✗ Error finishing game:', error));
+    }
 }
 
 function renderLeaderboard() {
@@ -544,18 +561,36 @@ function loadStoredLeaderboard() {
     }
 }
 
-function saveStoredLeaderboard() {
+// Remove these functions:
+// - saveStoredLeaderboard()
+// - loadStoredLeaderboard()
+
+// Replace with API call
+async function loadLeaderboard() {
     try {
-        localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboard));
+        const response = await fetch(`${API_BASE_URL}/api/game/leaderboard?limit=${LEADERBOARD_LIMIT}`);
+        const data = await response.json();
+        
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to load leaderboard');
+        }
+        
+        leaderboard = data.leaderboard;
+        return leaderboard;
     } catch (error) {
-        console.error('Error saving leaderboard:', error);
+        console.error('Error loading leaderboard:', error);
+        return [];
     }
 }
 
+// Update game initialization to load leaderboard from database
 document.addEventListener('DOMContentLoaded', async () => {
-        // Load existing game if one exists
-        const gameExists = await loadExistingGame();
-        
-        // Then load the inventory and UI
-        loadRandomAnimeInventory();
-    });
+    // Load existing game if one exists
+    const gameExists = await loadExistingGame();
+
+    // Load leaderboard from database
+    await loadLeaderboard();
+    
+    // Then load the inventory and UI
+    loadRandomAnimeInventory();
+});

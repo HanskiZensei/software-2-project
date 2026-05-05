@@ -89,7 +89,7 @@ def get_random_anime(n: int = 3) -> List[Dict]:
     query = '''
     query ($page: Int, $perPage: Int) {
       Page (page: $page, perPage: $perPage) {
-        media (type: ANIME, sort: POPULARITY_DESC) {
+        media (type: ANIME, sort: POPULARITY_DESC, isAdult: false) {
           id
           title {
             english

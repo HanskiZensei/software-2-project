@@ -278,3 +278,93 @@ def travel(game_id):
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/leaderboard', methods=['GET'])
+def get_leaderboard():
+    """
+    Get the top games sorted by points.
+    Optional query parameter: limit (default 10)
+    """
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        
+        if limit < 1 or limit > 100:
+            limit = 10
+        
+        session = Session()
+        try:
+            # Query top games by points, sorted descending
+            top_games = session.query(Game).order_by(Game.points.desc()).limit(limit).all()
+            
+            leaderboard = []
+            for game in top_games:
+                leaderboard.append({
+                    'playerName': game.screen_name,
+                    'score': game.points,
+                    'gameId': game.id,
+                    'location': game.location
+                })
+            
+            return jsonify({
+                'success': True,
+                'leaderboard': leaderboard,
+                'count': len(leaderboard)
+            }), 200
+        
+        finally:
+            session.close()
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/<int:game_id>/finish', methods=['POST'])
+def finish_game(game_id):
+    """
+    Finish the game and save the final score (points).
+    Expects JSON with points and optional money.
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or 'points' not in data:
+            return jsonify({'error': 'Missing points'}), 400
+        
+        points = data['points']
+        
+        # Validate points is a number
+        if not isinstance(points, (int, float)) or points < 0:
+            return jsonify({'error': 'Points must be a non-negative number'}), 400
+        
+        session = Session()
+        try:
+            # Fetch the game
+            game = session.query(Game).filter_by(id=game_id).first()
+            
+            if not game:
+                return jsonify({'error': 'Game not found'}), 404
+            
+            # Update points (and optionally money)
+            game.points = int(points)
+            
+            if 'money' in data:
+                money = data['money']
+                if isinstance(money, (int, float)) and money >= 0:
+                    game.money = int(money)
+            
+            session.commit()
+            
+            return jsonify({
+                'success': True,
+                'game_id': game.id,
+                'points': game.points,
+                'money': game.money,
+                'screen_name': game.screen_name
+            }), 200
+        
+        finally:
+            session.close()
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
