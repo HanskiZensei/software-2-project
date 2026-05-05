@@ -272,15 +272,13 @@ body, html {
 
 .collection-table th:nth-child(1),
 .collection-table td:nth-child(1) {
-    width: 52%;
+    width: 68%;
 }
 
 .collection-table th:nth-child(2),
 .collection-table th:nth-child(3),
-.collection-table th:nth-child(4),
 .collection-table td:nth-child(2),
-.collection-table td:nth-child(3),
-.collection-table td:nth-child(4) {
+.collection-table td:nth-child(3) {
     width: 16%;
     text-align: right;
 }
