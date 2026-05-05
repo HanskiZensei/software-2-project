@@ -191,7 +191,6 @@ function createAnimeSlot(anime, onClick) {
 function createCollectionRow(anime) {
     const row = document.createElement('tr');
     const animeCell = document.createElement('td');
-    const averageCell = document.createElement('td');
     const priceCell = document.createElement('td');
     const pointsCell = document.createElement('td');
     const animeInfo = document.createElement('div');
@@ -213,12 +212,10 @@ function createCollectionRow(anime) {
 
     animeInfo.appendChild(title);
     animeCell.appendChild(animeInfo);
-    averageCell.textContent = String(score);
     priceCell.textContent = `${getAnimePrice(anime)}€`;
     pointsCell.textContent = String(score);
 
     row.appendChild(animeCell);
-    row.appendChild(averageCell);
     row.appendChild(priceCell);
     row.appendChild(pointsCell);
 
