@@ -14,6 +14,46 @@ let gameState = loadStoredGameState();
 let leaderboard = loadStoredLeaderboard();
 let hasAskedPlayerName = false;
 
+/**
+ * Load existing game data from server if a game is active
+ */
+async function loadExistingGame() {
+    const gameId = getGameId();
+    
+    if (!gameId) {
+        return false;
+    }
+
+    try {
+        const data = await getGameInfo(gameId);
+        
+        // Update gameState with server data
+        if (data.game) {
+            gameState.playerName = data.game.screen_name;
+            gameState.money = data.game.money;
+            gameState.points = data.game.points;
+            saveStoredGameState();
+        }
+
+        // Set current airport from server data
+        if (data.current_airport) {
+            const airport = {
+                icao: data.current_airport.ident,
+                name: data.current_airport.name,
+                latitude: data.current_airport.latitude_deg,
+                longitude: data.current_airport.longitude_deg
+            };
+            setCurrentAirport(airport);
+        }
+
+        console.log('✓ Existing game loaded successfully');
+        return true;
+    } catch (error) {
+        console.error('✗ Error loading existing game:', error);
+        return false;
+    }
+}
+
 async function loadRandomAnimeInventory() {
     const inventory = document.getElementById('anime-inventory');
 
@@ -21,7 +61,8 @@ async function loadRandomAnimeInventory() {
         return;
     }
 
-    if (!hasAskedPlayerName && !gameState.gameOver) {
+    // Only ask for player name if it's a brand new game (not resuming an existing one)
+    if (!hasAskedPlayerName && !gameState.gameOver && !isGameActive()) {
         hasAskedPlayerName = true;
         setupPlayerNameModal(true);
     } else {
@@ -48,7 +89,7 @@ async function loadRandomAnimeInventory() {
             throw new Error(data.error || 'Failed to load random anime');
         }
 
-        inventoryAnime = (data.anime || []).map(addAnimePrice);
+        inventoryAnime = (data.series || []).map(addAnimePrice);
         renderAnimeInventory();
     } catch (error) {
         console.error('Error loading anime inventory:', error);
@@ -56,6 +97,8 @@ async function loadRandomAnimeInventory() {
         renderAnimeInventory();
     }
 }
+
+// ... existing code ...
 
 function renderAnimeInventory() {
     const inventory = document.getElementById('anime-inventory');
@@ -257,6 +300,7 @@ function spendFuelForDistance(distanceKm) {
 function renderGameStatus() {
     const playerName = document.getElementById('player-name-val');
     const fuel = document.getElementById('fuel-val');
+    const money = document.getElementById('money-val');
     const location = document.getElementById('location-val');
 
     if (playerName) {
@@ -265,6 +309,10 @@ function renderGameStatus() {
 
     if (fuel) {
         fuel.textContent = `${Math.max(0, Math.ceil(gameState.fuel))} L`;
+    }
+
+    if (money) {
+        money.textContent = `${Math.max(0, gameState.money)} €`;
     }
 
     if (location && currentAirport) {
@@ -382,7 +430,7 @@ function setupPlayerNameModal(force = false) {
     input.value = '';
     input.focus();
 
-    const saveName = () => {
+    const saveName = async () => {
         const name = input.value.trim();
 
         if (!name) {
@@ -394,6 +442,35 @@ function setupPlayerNameModal(force = false) {
         saveStoredGameState();
         renderGameStatus();
         modal.classList.remove('active');
+
+        // Create the game on the server and save the game ID
+        try {
+            const location = currentAirport ? currentAirport.icao : "EFHK";
+            const gameData = await createNewGame(name, location);
+            console.log('✓ Game created and ID saved');
+            
+            // Fetch full airport data for the starting location
+            try {
+                const gameInfo = await getGameInfo(gameData.game_id);
+                if (gameInfo.current_airport) {
+                    const airport = {
+                        icao: gameInfo.current_airport.ident,
+                        name: gameInfo.current_airport.name,
+                        latitude: gameInfo.current_airport.latitude_deg,
+                        longitude: gameInfo.current_airport.longitude_deg
+                    };
+                    setCurrentAirport(airport);
+                    console.log('✓ Current airport initialized:', airport.icao);
+                    
+                    // Re-render game status now that currentAirport is set
+                    renderGameStatus();
+                }
+            } catch (error) {
+                console.error('✗ Error loading airport data:', error);
+            }
+        } catch (error) {
+            console.error('✗ Error creating game:', error);
+        }
     };
 
     confirm.onclick = saveName;
@@ -475,4 +552,10 @@ function saveStoredLeaderboard() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', loadRandomAnimeInventory);
+document.addEventListener('DOMContentLoaded', async () => {
+        // Load existing game if one exists
+        const gameExists = await loadExistingGame();
+        
+        // Then load the inventory and UI
+        loadRandomAnimeInventory();
+    });

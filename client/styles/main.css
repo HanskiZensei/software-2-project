@@ -339,6 +339,23 @@ body, html {
     min-width: 0;
 }
 
+.stat-row-dual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .8rem;
+    margin: 2px 0;
+}
+
+.stat-row-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .4rem;
+    align-items: baseline;
+    font-size: 1rem;
+    text-transform: uppercase;
+    min-width: 0;
+}
+
 .stat-label {
     color: #fff;
 }

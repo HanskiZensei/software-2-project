@@ -45,7 +45,7 @@ def create_game():
                 screen_name=screen_name,
                 location=location,
                 points=0,
-                money=0
+                money=100
             )
         
             session.add(new_game)

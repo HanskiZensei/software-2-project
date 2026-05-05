@@ -12,6 +12,19 @@ const airportMarkers = {};
 let currentAirport = null;
 
 /**
+ * Set the current airport (exposed for external updates)
+ */
+function setCurrentAirport(airport) {
+    currentAirport = {
+        icao: airport.icao,
+        name: airport.name,
+        latitude: airport.latitude,
+        longitude: airport.longitude
+    };
+    updateMarkerStyles();
+}
+
+/**
  * Fetch airports from backend and add them as markers
  */
 async function loadAirports() {
@@ -127,7 +140,7 @@ function closeTravelModal() {
 /**
  * Handle travel confirmation
  */
-function handleTravelConfirm(destinationAirport) {
+async function handleTravelConfirm(destinationAirport) {
     const previousAirport = currentAirport;
 
     if (previousAirport && previousAirport.icao === destinationAirport.icao) {
@@ -144,19 +157,35 @@ function handleTravelConfirm(destinationAirport) {
         }
     }
 
-    currentAirport = destinationAirport;
-    console.log(`Travel confirmed to ${destinationAirport.icao} (${destinationAirport.name})`);
-    
-    // Update marker styles
-    updateMarkerStyles();
-    closeTravelModal();
+    try {
+        // Call the backend to save the travel
+        const data = await travelToAirport(destinationAirport.icao);
+        
+        // Update current airport with response data
+        currentAirport = {
+            icao: data.current_airport.ident,
+            name: data.current_airport.name,
+            latitude: data.current_airport.latitude_deg,
+            longitude: data.current_airport.longitude_deg
+        };
+        
+        console.log(`✓ Travel confirmed to ${destinationAirport.icao} (${destinationAirport.name})`);
+        
+        // Update marker styles
+        updateMarkerStyles();
+        closeTravelModal();
 
-    if (typeof renderGameStatus === 'function') {
-        renderGameStatus();
-    }
+        if (typeof renderGameStatus === 'function') {
+            renderGameStatus();
+        }
 
-    if (typeof loadRandomAnimeInventory === 'function') {
-        loadRandomAnimeInventory();
+        if (typeof loadRandomAnimeInventory === 'function') {
+            loadRandomAnimeInventory();
+        }
+    } catch (error) {
+        console.error('✗ Travel failed:', error);
+        closeTravelModal();
+        alert('Travel failed: ' + error.message);
     }
 }
 
