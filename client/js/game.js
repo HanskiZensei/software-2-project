@@ -182,3 +182,42 @@ async function travelToAirport(destination) {
         throw error;
     }
 }
+
+/**
+ * Update game money on the server
+ * @param {number} money - The new money amount
+ * @returns {Promise<Object>} Updated game data
+ */
+async function updateGameMoney(money) {
+    try {
+        const gameId = getGameId();
+
+        if (!gameId) {
+            throw new Error('No active game found');
+        }
+
+        const payload = {
+            money: money
+        };
+
+        const response = await fetch(`http://localhost:5000/api/game/${gameId}/money`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to update money');
+        }
+
+        const data = await response.json();
+        console.log('✓ Money updated on server:', data.new_money);
+        return data;
+    } catch (error) {
+        console.error('✗ Error updating money:', error.message);
+        throw error;
+    }
+}
